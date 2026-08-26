@@ -9,9 +9,13 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return  MaterialApp(
       //Remove a faixa DEBUG
       debugShowCheckedModeBanner: false,
+
+      // theme: ThemeData(
+      //   scaffoldBackgroundColor: const Color.fromARGB(255, 83, 40, 40),
+      // ),
 
       //Título do App
       title: 'Lista de Tarefas',
@@ -78,6 +82,9 @@ class _HomePageState extends State<HomePage> {
     /// Método responsável por construir a interface da página inicial.
     return Scaffold(
       ///Barra superior do App
+      ///
+      ///
+      backgroundColor: Colors.amber[100],
       appBar: AppBar(
         title: const Text(
           'Lista de Tarefas',
