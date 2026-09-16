@@ -1,6 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'database/database_helper.dart';
+import 'dart:io';
+
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  if (Platform.isWindows ||
+      Platform.isLinux ||
+      Platform.isMacOS) {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+  }
+
   runApp(const MainApp());
 }
 
@@ -9,7 +22,7 @@ class MainApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return  MaterialApp(
+    return MaterialApp(
       //Remove a faixa DEBUG
       debugShowCheckedModeBanner: false,
 
@@ -50,32 +63,64 @@ class _HomePageState extends State<HomePage> {
   ///   "Fazer exercícios",
   ///   "Ler documentação"
   /// ]
-  List<String> tarefas = [];
+  // List<String> tarefas = [];
+
+  List<Map<String, dynamic>> tarefas = [];
+  @override
+  void initState() {
+    super.initState();
+    carregarTarefas();
+  }
+
+  Future<void> carregarTarefas() async {
+    final dados = await DatabaseHelper.instance.listarTarefas();
+
+    setState(() {
+      tarefas = dados;
+    });
+  }
 
   /// Função responsável por adicionar uma nova tarefa.
-  void adicionarTarefa() {
-    /// Verifica se o usuário digitou algo.
-    if (controller.text.isEmpty) {
+  // void adicionarTarefa() {
+  //   /// Verifica se o usuário digitou algo.
+  //   if (controller.text.isEmpty) {
+  //     return;
+  //   }
+
+  //   /// setState informa ao Flutter que os dados mudaram.
+  //   /// Sempre que chamamos setState, a tela é redesenhada.
+  //   setState(() {
+  //     /// Adiciona o texto digitado na lista.
+  //     tarefas.add({'descricao': controller.text});
+  //   });
+
+  //   /// Limpa o campo após adicionar a tarefa.
+  //   controller.clear();
+  // }
+  Future<void> adicionarTarefa() async {
+    if (controller.text.trim().isEmpty) {
       return;
     }
 
-    /// setState informa ao Flutter que os dados mudaram.
-    /// Sempre que chamamos setState, a tela é redesenhada.
-    setState(() {
-      /// Adiciona o texto digitado na lista.
-      tarefas.add(controller.text);
-    });
+    await DatabaseHelper.instance.inserirTarefa(controller.text);
 
-    /// Limpa o campo após adicionar a tarefa.
     controller.clear();
+
+    carregarTarefas();
   }
 
-  /// Remove uma tarefa da lista.
-  void removerTarefa(int index) {
-    setState(() {
-      /// Remove a tarefa pela posição.
-      tarefas.removeAt(index);
-    });
+  // /// Remove uma tarefa da lista.
+  // void removerTarefa(int index) {
+  //   setState(() {
+  //     /// Remove a tarefa pela posição.
+  //     tarefas.removeAt(index);
+  //   });
+  // }
+
+  Future<void> removerTarefa(int id) async {
+    await DatabaseHelper.instance.removerTarefa(id);
+
+    carregarTarefas();
   }
 
   Widget build(BuildContext context) {
@@ -136,12 +181,12 @@ class _HomePageState extends State<HomePage> {
                 itemBuilder: (context, index) {
                   return Card(
                     child: ListTile(
-                      title: Text(tarefas[index]), // Exibe a tarefa
+                      title: Text(tarefas[index]['descricao']),
                       trailing: IconButton(
                         icon: const Icon(Icons.delete),
                         onPressed: () {
                           // Ação para remover a tarefa
-                          removerTarefa(index);
+                          removerTarefa(tarefas[index]['id']);
                         },
                       ),
                     ),
