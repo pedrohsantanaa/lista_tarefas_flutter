@@ -1,5 +1,6 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -21,11 +22,7 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: _createDB,
-    );
+    return await openDatabase(path, version: 1, onCreate: _createDB);
   }
 
   Future<void> _createDB(Database db, int version) async {
@@ -40,12 +37,7 @@ class DatabaseHelper {
   Future<int> inserirTarefa(String descricao) async {
     final db = await database;
 
-    return await db.insert(
-      'tarefas',
-      {
-        'descricao': descricao,
-      },
-    );
+    return await db.insert('tarefas', {'descricao': descricao});
   }
 
   Future<List<Map<String, dynamic>>> listarTarefas() async {
@@ -57,8 +49,15 @@ class DatabaseHelper {
   Future<void> removerTarefa(int id) async {
     final db = await database;
 
-    await db.delete(
+    await db.delete('tarefas', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<int> atualizarTarefa(int id, String descricao) async {
+    final db = await database;
+
+    return await db.update(
       'tarefas',
+      {'descricao': descricao},
       where: 'id = ?',
       whereArgs: [id],
     );

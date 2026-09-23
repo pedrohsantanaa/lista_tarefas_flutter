@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'database/database_helper.dart';
-import 'dart:io';
 
+import 'database/database_helper.dart';
+
+import 'dart:io';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
 
-  if (Platform.isWindows ||
-      Platform.isLinux ||
-      Platform.isMacOS) {
+  if (Platform.isWindows || Platform.isLinux || Platform.isMacOS) {
     sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
   }
@@ -117,6 +116,50 @@ class _HomePageState extends State<HomePage> {
   //   });
   // }
 
+  Future<void> editarTarefa(int id, String descricaoAtual) async {
+    final TextEditingController editController = TextEditingController(
+      text: descricaoAtual,
+    );
+
+    await showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Editar Tarefa'),
+          content: TextField(
+            controller: editController,
+            decoration: const InputDecoration(labelText: 'Descrição'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('Cancelar'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                if (editController.text.trim().isEmpty) {
+                  return;
+                }
+
+                await DatabaseHelper.instance.atualizarTarefa(
+                  id,
+                  editController.text,
+                );
+
+                Navigator.pop(context);
+
+                carregarTarefas();
+              },
+              child: const Text('Salvar'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   Future<void> removerTarefa(int id) async {
     await DatabaseHelper.instance.removerTarefa(id);
 
@@ -182,12 +225,25 @@ class _HomePageState extends State<HomePage> {
                   return Card(
                     child: ListTile(
                       title: Text(tarefas[index]['descricao']),
-                      trailing: IconButton(
-                        icon: const Icon(Icons.delete),
-                        onPressed: () {
-                          // Ação para remover a tarefa
-                          removerTarefa(tarefas[index]['id']);
-                        },
+                      trailing: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          IconButton(
+                            icon: const Icon(Icons.edit),
+                            onPressed: () {
+                              editarTarefa(
+                                tarefas[index]['id'],
+                                tarefas[index]['descricao'],
+                              );
+                            },
+                          ),
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            onPressed: () {
+                              removerTarefa(tarefas[index]['id']);
+                            },
+                          ),
+                        ],
                       ),
                     ),
                   );
